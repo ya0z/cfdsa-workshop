@@ -1,0 +1,7 @@
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 3000
+  failureThrehold: 3
+  periodSeconds: 30
+  
