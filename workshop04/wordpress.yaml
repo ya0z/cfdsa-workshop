@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp-svc
+  labels:
+    name: wp-svc
+spec:
+  ports:
+    - port: 80
+  selector:
+    name: wordpress
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-pvc
+  labels:
+    name: wp-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  labels:
+    name: wordpress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: wordpress
+  template:
+    metadata:
+      labels:
+        name: wordpress
+    spec:
+      containers:
+      - image: wordpress:4.8-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: wpdb-svc
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wpdb-secret
+              key: ROOT_PASSWORD
+        ports:
+        - containerPort: 80
+          name: wp-port
+        volumeMounts:
+        - name: wp-vol
+          mountPath: /var/www/html
+      volumes:
+      - name: wp-vol
+        persistentVolumeClaim:
+          claimName: wp-pvc
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+   name: wp-ing
+   labels:
+      name: wp-ing
+   annotations:
+      nginx.ingress.kubernetes.io/limit-rps: "5"
+      nginx.ingress.kubernetes.io/limit-connections: "5"
+      #nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+   tls:
+    - hosts:
+      - wp-137.184.250.170.nip.io
+      secretName: wp-tls-secret
+   ingressClassName: nginx
+   defaultBackend:
+      service:
+         name: default-backend-svc
+         port:
+            number: 3000
+   rules:
+   - host: wp-137.184.250.170.nip.io
+     http:
+        paths:
+        - path: / 
+          pathType: Prefix
+          backend:
+             service:
+                name: wp-svc
+                port:
+                   number: 80
