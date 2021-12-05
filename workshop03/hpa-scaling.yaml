@@ -1,0 +1,54 @@
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+   name: bggappv1-hpa
+   labels:
+      name: bggappv1-hpa
+spec:
+   minReplicas: 1
+   maxReplicas: 4
+   scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bggappv1-deploy
+   metrics:
+   - type: Resource
+     resource:
+        name: cpu
+        target:
+           type: Utilization
+           averageUtilization: 90
+   - type: Resource
+     resource:
+        name: memory
+        target:
+           type: Utilization
+           averageUtilization: 80
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+   name: bggappv2-hpa
+   labels:
+      name: bggappv2-hpa
+spec:
+   minReplicas: 1
+   maxReplicas: 4
+   scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bggappv2-deploy
+   metrics:
+   - type: Resource
+     resource:
+        name: cpu
+        target:
+           type: Utilization
+           averageUtilization: 90
+   - type: Resource
+     resource:
+        name: memory
+        target:
+           type: Utilization
+           averageUtilization: 80
